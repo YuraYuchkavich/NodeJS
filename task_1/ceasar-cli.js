@@ -1,59 +1,66 @@
 
-const argv = require('minimist')(process.argv.slice(2))
 const fs = require('fs')
 const moduleCeasar = require('./ceasar.js')
-const readline = require("readline");
+const { program } = require('commander')
+const readline = require('readline')
 
+program.version('0.0.1')
 
-if (!Object.keys(argv).includes('s') && !Object.keys(argv).includes('shift')) {
-    console.log('Shift param is required!')
-} else if (!Object.keys(argv).includes('a') && !Object.keys(argv).includes('action')) {
-    console.log('Action param is required')
-} else  if (!Number.isInteger(argv['s'])) {
-    console.log('Shift param should be "Number" ')
-} else if (!['encode', 'decode'].includes(argv['a'])) {
-    console.log('Action param should be "encode" or "decode" ')
+program
+    .option('-s, --shift <type>', 'a shift')
+    .option('-a, --action <type>', 'an action encode/decode')
+    .option('-i, --input <type>', 'an input file')
+    .option('-o, --output <type>', 'an output file')
+
+program.parse(process.argv);
+const argv = program.opts();
+
+if (!Object.keys(argv).includes('shift')) {
+    process.stdout.write('Shift param is required!')
+} else if (!Object.keys(argv).includes('action')) {
+    process.stdout.write('Action param is required')
+} else  if (isNaN(argv.shift)) {
+    process.stdout.write('Shift param should be "Number" ')
+} else if (!['encode', 'decode'].includes(argv.action)) {
+    process.stdout.write('Action param should be "encode" or "decode" ')
 } else {
-    if (!Object.keys(argv).includes('i') && !Object.keys(argv).includes('input')) {
-        if (Object.keys(argv).includes('o') && Object.keys(argv).includes('output')) {
+    if (!Object.keys(argv).includes('input')) {
+        if (Object.keys(argv).includes('output')) {
+           
             const rl = readline.createInterface({
                 input: process.stdin
             })
             rl.on('line', (input) => {
-                let writeableStream = fs.createWriteStream(argv['o'])
-                writeableStream.write(moduleCeasar.ceasar(argv['s'], argv['a'], input) + a)
+                let writeableStream = fs.createWriteStream(argv.output, {flags: 'a'})
+                const action = Number(argv.shift) < 0  ?  argv.action === 'encode'  ? 'decode' : 'encode' :  argv.action
+                writeableStream.write(moduleCeasar.ceasar(Math.abs(Number(argv.shift)), action, input))
                 writeableStream.end()
-                console.log('end')
             })
         } else {
             const rl = readline.createInterface({
                 input: process.stdin
             })
             rl.on('line', (input) => {
-                console.log(moduleCeasar.ceasar(argv['s'], argv['a'], input))
+                const action = Number(argv.shift) < 0  ?  argv.action === 'encode'  ? 'decode' : 'encode' :  argv.action
+                process.stdout.write(moduleCeasar.ceasar(Math.abs(Number(argv.shift)), action, input) + '\n')
             })
         }
   
     } else {
-        if (!Object.keys(argv).includes('o') && !Object.keys(argv).includes('output')) {
-            let readableStreamInput = fs.createReadStream(argv['i'], "utf8")
-            readableStreamInput.on("data", function(chunk){     
-            console.log(moduleCeasar.ceasar(argv['s'], argv['a'], chunk))
+        if (!Object.keys(argv).includes('output')) {
+            let readableStreamInput = fs.createReadStream(argv.input, "utf8")
+            readableStreamInput.on("data", function(chunk){   
+            const action = Number(argv.shift) < 0  ?  argv.action === 'encode'  ? 'decode' : 'encode' :  argv.action
+            process.stdout.write(moduleCeasar.ceasar(Math.abs(Number(argv.shift)), action, chunk))
             })
         } else {
-            let readableStreamOutput = fs.createReadStream(argv['o'], "utf8")
-            let a = ''
-            readableStreamOutput.on("data", function(chunk1){ 
-                a = chunk1
-            })
-            let readableStreamInput = fs.createReadStream(argv['i'], "utf8")
+            let readableStreamInput = fs.createReadStream(argv.input, "utf8")
             readableStreamInput.on("data", function(chunk){       
-                let writeableStream = fs.createWriteStream(argv['o'])
-                writeableStream.write(moduleCeasar.ceasar(argv['s'], argv['a'], chunk) + a)
+                let writeableStream = fs.createWriteStream(argv.output, {flags: 'a'})
+                const action = Number(argv.shift) < 0  ?  argv.action === 'encode'  ? 'decode' : 'encode' :  argv.action
+                writeableStream.write(moduleCeasar.ceasar(Math.abs(Number(argv.shift)), action, chunk))
                 writeableStream.end()
             })
         }
-    
     }
-
 }
